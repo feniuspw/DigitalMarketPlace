@@ -5,3 +5,4 @@ lib/
 .Python
 *.py[cod]
 pip-selfcheck.json
+src/digitalmarket/settings.py
