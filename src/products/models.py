@@ -8,7 +8,6 @@ from django.utils.encoding import python_2_unicode_compatible
 # and use @python_2_unicode_compatible on top of __str__ function.
 # ================================================================
 
-# Create your models here.
 
 class Product(models.Model):
     title = models.CharField(max_length=100)

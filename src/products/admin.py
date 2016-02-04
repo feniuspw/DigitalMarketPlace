@@ -3,8 +3,8 @@ from django.contrib import admin
 # Register your models here.
 from .models import Product
 
-#show more information on admin page of products
-#how stuff render or how stuff looks
+# show more information on admin page of products
+# how stuff render or how stuff looks
 
 
 class ProductAdmin(admin.ModelAdmin):
@@ -12,8 +12,9 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ["title","description"]
     list_filter = ["price","sale_price"]
     list_editable = ["sale_price"]
-    class Meta:
-        model = Product
+
+   # class Meta:
+   #     model = Product
 
 
 
