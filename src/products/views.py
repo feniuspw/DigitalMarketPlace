@@ -7,7 +7,58 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 
+# ------------------------ CLASS BASED VIEWS ------------------------
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView
+from django.views.generic.list import ListView
+from django.views.generic.edit import UpdateView
+# -------------------------------------------------------------------
+from .mixins import MultiSlugMixin, SubmitBtnMixin
 
+# ************************************* CLASS BASED VIEWS ********************************************
+
+
+class ProductCreateView(SubmitBtnMixin, CreateView):
+    model = Product
+    form_class = ProductModelForm
+    template_name = "products/form.html"
+    success_url = "/product/add"
+    submit_btn = "Add Product"
+
+
+class ProductDetailView(MultiSlugMixin, DetailView):
+    model = Product
+
+
+class ProductListView(ListView):
+    model = Product
+    # template_name = "products/list_view.html"
+    #
+    # def get_context_data(self, **kwargs):
+    #     context = super(ProductListView, self).get_context_data(**kwargs)
+    #     context["queryset"] = self.get_queryset()
+    #     return context
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super(ProductListView, self).get_queryset(**kwargs)
+        return qs
+
+
+class ProductUpdateView(SubmitBtnMixin, MultiSlugMixin, UpdateView):
+    model = Product
+    form_class = ProductModelForm
+    template_name = "products/form.html"
+    success_url = "/product/list"
+    submit_btn = "Update Product"
+
+
+
+
+
+
+# ****************************************************************************************************
+
+# *********************************** FUNCTION BASED VIEWS *******************************************
 def create_view(request):
     #Easy way to create forms
     form = ProductModelForm(request.POST or None)
@@ -37,10 +88,25 @@ def create_view(request):
     #     # third way
     #     new_obj = Product(title=title, description=description, price = price)
     #     new_obj.save()
-    template = "products/create_view.html"
+    template = "products/form.html"
     context = {
-       "form": form
+        "form": form,
+        "submit_btn": "Create Product",
     }
+    return render(request, template, context)
+
+
+def update_view(request, object_id=None):
+    product = get_object_or_404(Product, pk=object_id)
+    form = ProductModelForm(request.POST or None, instance=product)
+    if form.is_valid():
+        instance = form.save(commit=False)
+        instance.save()
+    template = "products/form.html"
+    context = {'object': product,
+               'form': form,
+               "submit_btn": "Update Product",
+               }
     return render(request, template, context)
 
 
@@ -73,5 +139,7 @@ def list_view(request):
     queryset = Product.objects.all()
 
     # dictionary of values
-    context={'queryset':queryset}
+    context = {'queryset':queryset}
     return render(request, template, context)
+
+# ****************************************************************************************************
