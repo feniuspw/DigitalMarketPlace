@@ -13,17 +13,34 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 # -------------------------------------------------------------------
-from .mixins import MultiSlugMixin, SubmitBtnMixin
+from src.digitalmarket.mixins import MultiSlugMixin, SubmitBtnMixin, LoginRequiredMixin
+from .mixins import ProductManagerMixin
+
+from django.core.urlresolvers import reverse
 
 # ************************************* CLASS BASED VIEWS ********************************************
 
 
-class ProductCreateView(SubmitBtnMixin, CreateView):
+class ProductCreateView(LoginRequiredMixin, SubmitBtnMixin, CreateView):
     model = Product
     form_class = ProductModelForm
     template_name = "products/form.html"
-    success_url = "/product/add"
+    #success_url = "/product/list"
     submit_btn = "Add Product"
+
+    def form_valid(self, form):
+        user = self.request.user
+        form.instance.user = user
+        valid_data = super(ProductCreateView, self).form_valid(form)
+        form.instance.managers.add(user)
+        # todo: add all default users
+        return valid_data
+
+    # just showing that I can use reverse in this function as well
+    # def get_success_url(self):
+    #     return reverse("products:product_list_view")
+
+
 
 
 class ProductDetailView(MultiSlugMixin, DetailView):
@@ -44,14 +61,20 @@ class ProductListView(ListView):
         return qs
 
 
-class ProductUpdateView(SubmitBtnMixin, MultiSlugMixin, UpdateView):
+class ProductUpdateView(ProductManagerMixin, SubmitBtnMixin, MultiSlugMixin, UpdateView):
     model = Product
     form_class = ProductModelForm
     template_name = "products/form.html"
     success_url = "/product/list"
     submit_btn = "Update Product"
 
-
+    # def get_object(self, *args, **kwargs):
+    #     user = self.request.user
+    #     obj = super(ProductUpdateView, self).get_object(*args, **kwargs)
+    #     if obj.user == user or user in obj.managers.all():
+    #         return obj
+    #     else:
+    #         raise Http404
 
 
 

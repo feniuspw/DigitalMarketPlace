@@ -1,7 +1,7 @@
 from django import forms
 
 from .models import Product
-
+from django.utils.text import slugify
 PUBLISH_CHOICES = (
     ('publish', "Publish"),
     ('draft', "Draft"),
@@ -65,6 +65,17 @@ class ProductModelForm(forms.ModelForm):
                 "class": "my-custom-class",
                 "placeholder": "Put the description here."}),
         }
+
+    # We are going to override the clean method in order to make validations
+    #def clean(self, *args, **kwargs):
+        # run the default clean method
+        #cleaned_data = super(ProductModelForm, self).clean(*args, **kwargs)
+        #title = cleaned_data.get("title")
+        #slug = slugify(title)
+        #qs = Product.objects.filter(slug=slug).exists()
+        #if qs:
+        #    raise forms.ValidationError("Title is taken. A new title is needed. Please try again.")
+        #return cleaned_data
 
     def clean_price(self):
         price = self.cleaned_data.get("price")

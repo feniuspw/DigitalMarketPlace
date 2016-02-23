@@ -1,26 +1,26 @@
-from django.shortcuts import get_object_or_404
+from django.http import Http404
+
+from src.digitalmarket.mixins import LoginRequiredMixin
 
 
-class MultiSlugMixin(object):
-    model = None
+class ProductManagerMixin(LoginRequiredMixin, object):
 
-    def get_object(self, *args, **kwargs):
-        slug = self.kwargs.get("slug")
-        model_class = self.model
-        if slug is not None:
+        # TODO: needs improvement
+        def get_object(self, *args, **kwargs):
+            user = self.request.user
+            obj = super(ProductManagerMixin, self).get_object(*args, **kwargs)
+
             try:
-                obj = get_object_or_404(model_class, slug=slug)
-            except model_class.MultipleObjectsReturned:
-                obj = obj.filter(slug=slug).order_by("-title").first()
-        else:
-            obj = super(MultiSlugMixin, self).get_object(*args, **kwargs)
-        return obj
+                obj.user == user
+            except:
+                raise Http404
+    
+            try:
+                user in obj.managers.all()
+            except:
+                raise Http404
 
-
-class SubmitBtnMixin(object):
-    submit_btn = None
-
-    def get_context_data(self, *args, **kwargs):
-        context = super(SubmitBtnMixin, self).get_context_data(*args, **kwargs)
-        context["submit_btn"] = self.submit_btn
-        return context
+            if obj.user == user or user in obj.managers.all():
+                return obj
+            else:
+                raise Http404

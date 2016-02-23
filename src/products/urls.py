@@ -6,7 +6,6 @@ from .views import (
     ProductListView,
     ProductUpdateView,
     )
-from . import views
 
 app_name = 'products'
 urlpatterns = [
