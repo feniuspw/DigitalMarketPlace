@@ -1,6 +1,6 @@
 from django.http import Http404
 
-from src.digitalmarket.mixins import LoginRequiredMixin
+from digitalmarket.mixins import LoginRequiredMixin
 
 
 class ProductManagerMixin(LoginRequiredMixin, object):

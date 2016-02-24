@@ -21,11 +21,25 @@ from django.utils.encoding import python_2_unicode_compatible
 # and use @python_2_unicode_compatible on top of __str__ function.
 # ================================================================
 
+# ------------------ FILE PROTECTION ------------------
+from django.core.files.storage import FileSystemStorage
+# -----------------------------------------------------
+
+
+# handles the upload process
+def download_media_location(instance, filename):
+    return "%s/%s" %(instance.id, filename)
+
 
 class Product(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL)
     # n to n database relationship
     managers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="managers_products", blank=True)
+    media = models.FileField(blank=True,
+                             null=True,
+                             upload_to=download_media_location,
+                             storage=FileSystemStorage(location=settings.PROTECTED_ROOT)
+                             )
     title = models.CharField(max_length=100)
     slug = models.SlugField(blank=True, unique=True, max_length=255)
     description = models.TextField()
@@ -39,7 +53,6 @@ class Product(models.Model):
     def get_absolute_url(self):
         view_name = "products:detail_slug"
         return reverse(view_name, kwargs={"slug": self.slug})
-
 
 
 # make sure that the product does not already exists

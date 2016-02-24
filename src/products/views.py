@@ -13,10 +13,13 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 # -------------------------------------------------------------------
-from src.digitalmarket.mixins import MultiSlugMixin, SubmitBtnMixin, LoginRequiredMixin
+from digitalmarket.mixins import MultiSlugMixin, SubmitBtnMixin, LoginRequiredMixin
 from .mixins import ProductManagerMixin
 
 from django.core.urlresolvers import reverse
+
+
+
 
 # ************************************* CLASS BASED VIEWS ********************************************
 
