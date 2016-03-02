@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Product
+from .models import Product, MyProducts
 
 # show more information on admin page of products
 # how stuff render or how stuff looks
@@ -17,6 +17,6 @@ class ProductAdmin(admin.ModelAdmin):
         model = Product
 
 admin.site.register(Product, ProductAdmin)
-
+admin.site.register(MyProducts)
 
 

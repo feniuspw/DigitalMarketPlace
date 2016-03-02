@@ -1,9 +1,19 @@
+import os
+from django.conf import settings
+
+# guess the file type
+from mimetypes import guess_type
+
+# file wrapper (ver se nao tem uma forma mais decente de
+# fornecer isso ( pelo que me parece foi deprecado ou mudou de pacote ) )
+from wsgiref.util import FileWrapper
+
 from django.shortcuts import render
 # Create your views here.
 from .forms import ProductAddForm, ProductModelForm
 from .models import Product
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 
@@ -17,8 +27,6 @@ from digitalmarket.mixins import MultiSlugMixin, SubmitBtnMixin, LoginRequiredMi
 from .mixins import ProductManagerMixin
 
 from django.core.urlresolvers import reverse
-
-
 
 
 # ************************************* CLASS BASED VIEWS ********************************************
@@ -44,10 +52,33 @@ class ProductCreateView(LoginRequiredMixin, SubmitBtnMixin, CreateView):
     #     return reverse("products:list")
 
 
-
-
 class ProductDetailView(MultiSlugMixin, DetailView):
     model = Product
+
+
+class ProductDownloadView(MultiSlugMixin, DetailView):
+    model = Product
+
+    def get(self, request, *args, **kwargs):
+        obj = self.get_object()
+        # download permissions
+        if obj in request.user.myproducts.products.all():
+            filepath = os.path.join(settings.PROTECTED_ROOT, obj.media.path)
+            guessed_type = guess_type(filepath)[0]
+            wrapper = FileWrapper(open(filepath, 'rb'))
+            mimetype = 'application/force-download'
+            if guessed_type:
+                mimetype = guessed_type
+
+            response = HttpResponse(wrapper, content_type=mimetype)
+            if not request.GET.get("preview"):
+                response["Content-Disposition"] = "attachment; filename=%s" % obj.media.name
+
+            # related to different type of servers
+            response["X-SendFile"] = str(obj.media.name)
+            return response
+        else:
+            raise Http404
 
 
 class ProductListView(ListView):

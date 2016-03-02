@@ -54,6 +54,10 @@ class Product(models.Model):
         view_name = "products:detail_slug"
         return reverse(view_name, kwargs={"slug": self.slug})
 
+    def get_download(self):
+        view_name = "products:download_slug"
+        url = reverse(view_name, kwargs={"slug": self.slug})
+        return url
 
 # make sure that the product does not already exists
 def create_slug(instance):
@@ -89,3 +93,16 @@ def product_pre_save_receiver(sender, instance, *args, **kwargs):
         instance.slug = create_slug(instance)
 
 pre_save.connect(product_pre_save_receiver, sender=Product)
+
+
+class MyProducts(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL)
+    products = models.ManyToManyField(Product, blank=True)
+
+    @python_2_unicode_compatible
+    def __str__(self):
+        return "%s" % self.products.count()
+
+    class Meta:
+        verbose_name = "My Products"
+        verbose_name_plural = "My Products"
