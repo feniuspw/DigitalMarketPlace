@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load get_thumbnail %}
+{% block content %}
+<ul>
+    {% for product_instance in object.products.all %}
+        <li>
+            <!--{{ product_instance.thumbnail_set.all }}-->
+            <!--{{ product_instance.thumbnail_set.all.first }}-->
+            <!--{{ product_instance.thumbnail_set.all.first.media }}-->
+            <a href="{{product_instance.get_absolute_url}}">
+                <img src= "{{ product_instance|get_thumbnail:"sd" }}"/> </a>
+        </li>
+
+    {% empty %}
+        <li> No products yet.</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

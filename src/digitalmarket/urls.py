@@ -22,7 +22,8 @@ from django.contrib import admin
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^product/', include('products.urls', namespace="products"))
+    url(r'^product/', include('products.urls', namespace="products")),
+    url(r'^tag/', include('tags.urls', namespace="tags"))
 ]
 
 if settings.DEBUG:

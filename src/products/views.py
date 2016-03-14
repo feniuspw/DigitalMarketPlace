@@ -4,6 +4,9 @@ from django.conf import settings
 # guess the file type
 from mimetypes import guess_type
 
+# Q Lookups: a bit more advanced search
+from django.db.models import Q
+
 # file wrapper (ver se nao tem uma forma mais decente de
 # fornecer isso ( pelo que me parece foi deprecado ou mudou de pacote ) )
 from wsgiref.util import FileWrapper
@@ -91,7 +94,16 @@ class ProductListView(ListView):
     #     return context
 
     def get_queryset(self, *args, **kwargs):
-        qs = super(ProductListView, self).get_queryset(**kwargs)
+        # ATENCAO! TROQUEI **KWARGS PARA *ARGS NA LINHA ABAIXO (FAZENDO FUNCIONAR PRA PYTHON3.X)
+        # NAO SEI O PQ DISSO.
+        qs = super(ProductListView, self).get_queryset(*args)
+        query = self.request.GET.get("q")
+        # gambi pra funcionar
+        if not query:
+            query = ""
+        qs = qs.filter(Q(title__icontains=query) |
+                       Q(description__icontains=query))
+        print("CUUUUU")
         return qs
 
 
@@ -114,6 +126,7 @@ class ProductUpdateView(ProductManagerMixin, SubmitBtnMixin, MultiSlugMixin, Upd
 
 
 # ****************************************************************************************************
+
 
 # *********************************** FUNCTION BASED VIEWS *******************************************
 def create_view(request):
