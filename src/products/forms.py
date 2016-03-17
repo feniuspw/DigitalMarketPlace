@@ -48,6 +48,7 @@ class ProductAddForm(forms.Form):
 
 # Easy way to create forms
 class ProductModelForm(forms.ModelForm):
+    tags = forms.CharField(label='Related Tags', required=False)
     publish = forms.ChoiceField(widget=forms.RadioSelect, choices=PUBLISH_CHOICES, required=False)
 
     class Meta:

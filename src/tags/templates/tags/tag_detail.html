@@ -8,9 +8,8 @@
             <!--{{ product_instance.thumbnail_set.all.first }}-->
             <!--{{ product_instance.thumbnail_set.all.first.media }}-->
             <a href="{{product_instance.get_absolute_url}}">
-                <img src= "{{ product_instance|get_thumbnail:"sd" }}"/> </a>
+                <img src= "{{ product_instance|get_thumbnail:'sd' }}"/> </a>
         </li>
-
     {% empty %}
         <li> No products yet.</li>
     {% endfor %}

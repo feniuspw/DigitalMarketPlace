@@ -28,6 +28,8 @@ from django.views.generic.edit import UpdateView
 # -------------------------------------------------------------------
 from digitalmarket.mixins import MultiSlugMixin, SubmitBtnMixin, LoginRequiredMixin
 from .mixins import ProductManagerMixin
+from tags.models import Tag
+# verificar se pode importar assim (mesmo tipo de import esta em products/templatetags/get_thumbnail.pys
 
 from django.core.urlresolvers import reverse
 
@@ -47,6 +49,18 @@ class ProductCreateView(LoginRequiredMixin, SubmitBtnMixin, CreateView):
         form.instance.user = user
         valid_data = super(ProductCreateView, self).form_valid(form)
         form.instance.managers.add(user)
+        tags = form.cleaned_data.get("tags")
+        # solucao porca! apaga todas as tags relacionadas e insere de novo no banco o novo set de tags
+        # mesmo se for repetido
+        # talvez tenha algum caso q falhe!!! rever
+        if tags:
+            tag_list = tags.split(",")
+            for tag in tag_list:
+                tag = ''.join(tag.split(" "))
+                print(tag)
+                if not tag == " " and not tag == "":
+                    new_tag = Tag.objects.get_or_create(title=str(tag).strip())[0]
+                    new_tag.products.add(form.instance)
         # todo: add all default users
         return valid_data
 
@@ -103,7 +117,6 @@ class ProductListView(ListView):
             query = ""
         qs = qs.filter(Q(title__icontains=query) |
                        Q(description__icontains=query))
-        print("CUUUUU")
         return qs
 
 
@@ -114,6 +127,36 @@ class ProductUpdateView(ProductManagerMixin, SubmitBtnMixin, MultiSlugMixin, Upd
     success_url = "/product/list"
     submit_btn = "Update Product"
 
+    def get_initial(self):
+        initial = super(ProductUpdateView,self).get_initial()
+        tags = self.get_object().tag_set.all()
+        initial["tags"] = ", ".join([x.title for x in tags])
+        """
+        Same thing as:
+        tag_list = []
+        for x in tags:
+            tag_list.append(x.title)
+        """
+        return initial
+
+    def form_valid(self, form):
+        valid_data = super(ProductUpdateView, self).form_valid(form)
+        tags = form.cleaned_data.get("tags")
+        obj = self.get_object()
+        # solucao porca! apaga todas as tags relacionadas e insere de novo no banco o novo set de tags
+        # mesmo se for repetido
+        # talvez tenha algum caso q falhe!!! rever
+        obj.tag_set.clear()
+        if tags:
+            tag_list = tags.split(",")
+            for tag in tag_list:
+                tag = ''.join(tag.split(" "))
+                print(tag)
+                if not tag == " " and not tag == "":
+                    new_tag = Tag.objects.get_or_create(title=str(tag).strip())[0]
+                    new_tag.products.add(obj)
+        return valid_data
+
     # def get_object(self, *args, **kwargs):
     #     user = self.request.user
     #     obj = super(ProductUpdateView, self).get_object(*args, **kwargs)
@@ -122,15 +165,12 @@ class ProductUpdateView(ProductManagerMixin, SubmitBtnMixin, MultiSlugMixin, Upd
     #     else:
     #         raise Http404
 
-
-
-
 # ****************************************************************************************************
 
 
 # *********************************** FUNCTION BASED VIEWS *******************************************
 def create_view(request):
-    #Easy way to create forms
+    # Easy way to create forms
     form = ProductModelForm(request.POST or None)
     if form.is_valid():
         # form.save()

@@ -19,6 +19,10 @@ class TagDetailView(DetailView):
 class TagListView(ListView):
     model = Tag
 
-    def get_queryset(self):
-        return Tag.objects.filter(active=True)
+    # dessa forma limita o que vai puxar no list.
+    # existe uma forma de fazer isso automaticamente. que é nas models, (classe TagManager)
+    # def get_queryset(self):
+    #     return Tag.objects.all().active()
+    # esse metodo sobrescreve o padrao (que busca todos os objetos do banco automaticamente.
+    # dai vc pode fazer o que quiser ao inves de puxar todos
 
