@@ -25,6 +25,15 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.files.storage import FileSystemStorage
 # -----------------------------------------------------
 
+# ------------------- THUMBNAIL GENERATION LIBRARIES -------------------
+import os
+import random
+import shutil
+from PIL import Image
+
+from django.core.files import File
+# ----------------------------------------------------------------------
+
 
 # handles the upload process
 def download_media_location(instance, filename):
@@ -100,6 +109,20 @@ def product_pre_save_receiver(sender, instance, *args, **kwargs):
 pre_save.connect(product_pre_save_receiver, sender=Product)
 
 
+# tentando atualizar tabela myProducts automaticamente
+def product_update_myproducts_post_save_receiver(sender, instance, *args, **kwargs):
+    # cada usuario eh unico. por isso que eu chamo o metodo abaixo com [0] no final.. ja que vai retornar
+    # uma query so.
+    # todo: verificar se nao e necessario fazer verificacao se caso a query nao retorne nada
+    # nota ao To do acima. Acho que nao e necessario. pois so cria-se um produto se ja existe um usuario.
+    # todo: talvez criar trigger no banco seja mais rapido... na verdade eh. MUDAR ISSO PRA TRIGGER NO BANCO!!!!
+    myproducts = MyProducts.objects.filter(user=instance.user)[0]
+    myproducts.products.add(instance)
+    myproducts.save()
+
+post_save.connect(product_update_myproducts_post_save_receiver, sender=Product)
+
+
 def thumbnail_location(instance, filename):
     return "%s/%s" % (instance.product.slug, filename)
 
@@ -126,13 +149,6 @@ class Thumbnail(models.Model):
     @python_2_unicode_compatible
     def __str__(self):
         return str(self.media.path)
-
-
-import os, random
-import shutil
-from PIL import Image, ImageOps
-
-from django.core.files import File
 
 
 def create_new_thumb(media_path, instance, owner_slug, max_heigth, max_width):
@@ -173,7 +189,6 @@ def product_post_save_receiver(sender, instance, created, *args, **kwargs):
         hd_max = (400, 400)
         sd_max = (200, 200)
         micro_max = (50, 50)
-
         media_path = instance.media.path
         owner_slug = instance.slug
         if hd_created:
@@ -193,7 +208,7 @@ class MyProducts(models.Model):
 
     @python_2_unicode_compatible
     def __str__(self):
-        return "%s" % self.products.count()
+        return "%s : %s product(s)" %(self.user, self.products.count())
 
     class Meta:
         verbose_name = "My Products"

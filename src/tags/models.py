@@ -45,8 +45,9 @@ olhe para classe abaixo:
 ela eh uma model
 quando chamamos Tag.objects.all() por exemplo
 chamamos Tag(classe Tag)
-         .objects(atributo, se n setado eh default c esse nome)
-         .all()(metodo padrao ou nao, como descrito nos comentarios acima. Vc decide)"""
+         .objects(atributo. se n setado eh default c esse nome)
+         .all()(metodo padrao ou nao, como descrito nos comentarios acima. Vc decide)
+"""
 
 
 # NOTA: QUANDO EH MANY TO MANY FIELD VC PODE REFERENCIAR COMO: ex: object.products.all (tag object)

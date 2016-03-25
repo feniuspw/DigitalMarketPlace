@@ -20,15 +20,19 @@
 </form>
 </p>
 <ul>
-    {% for instance in object_list %}
-        <li class="{% cycle 'row1' 'row2' %}">
-            <a href="{{ instance.get_absolute_url }}">{{ instance }} </a><br/>
-            {{ instance.description|truncatechars:50 }}<br/>
-            {{ instance.price }}
-        </li>
-    {% empty %}
-        <li> No products yet.</li>
-    {% endfor %}
+    {% include "products/product_list_snippet.html" with product_list=object_list %}
+
+
+    <!--exemplo de uso de cycle para colocar classes diferentes em momentos alternados a cada laco do for-->
+    <!--{% for instance in object_list %}-->
+        <!--<li class="{% cycle 'row1' 'row2' %}">-->
+            <!--<a href="{{ instance.get_absolute_url }}">{{ instance }} </a><br/>-->
+            <!--{{ instance.description|truncatechars:50 }}<br/>-->
+            <!--{{ instance.price }}-->
+        <!--</li>-->
+    <!--{% empty %}-->
+        <!--<li> No products yet.</li>-->
+    <!--{% endfor %}-->
 </ul>
 
 

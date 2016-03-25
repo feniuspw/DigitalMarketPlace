@@ -1,0 +1,18 @@
+{% load get_thumbnail %}
+
+
+{% for instance in product_list %}
+{% with instance|get_thumbnail:"micro" as thumb %}
+<li>
+    <a href="{{ instance.get_absolute_url }}">{{ instance }} </a><br/>
+    {% if thumb %}
+    <a href="{{ instance.get_absolute_url }}">
+        <img src='{{ thumb }}'>
+    </a><br/>
+    {% endif %}
+    {{ instance.price }}
+</li>
+{% endwith %}
+{% empty %}
+<li> No products yet.</li>
+{% endfor %}

@@ -5,8 +5,8 @@ from .views import (
     TagDetailView
     )
 
-app_name = 'products'
+app_name = 'tags'
 urlpatterns = [
-    url(r'^list/$', TagListView.as_view(), name='list '),
     url(r'^detail/(?P<slug>[\w-]+)/$', TagDetailView.as_view(), name='detail'),
+    url(r'^list/$', TagListView.as_view(), name='list'),
 ]

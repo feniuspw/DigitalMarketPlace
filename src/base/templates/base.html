@@ -7,8 +7,34 @@
         .main-content{
             width: 800px;
             margin: 0 auto;
+            clear: both;
         }
-
+        .main-nav{
+            width: 800px;
+            margin: 10px auto;
+        }
+        .main-nav li{
+            display: inline;
+        }
+        .first-nav{
+            padding-left: 0px;
+        }
+        .pull-right {
+            float: right;
+        }
+        .pull-left{
+            float:left;
+        }
+        .col-primary{
+            width: 85%;
+        }
+        .col-sidebar{
+            padding-top: 20px;
+            width: 15%;
+        }
+        .clearfix{
+            clear: both;
+        }
         {% block style%}
 
 
@@ -19,10 +45,21 @@
     <title>Title</title>
 </head>
 <body>
+<!--QUANDO FOR USAR BOOTSTRAP NAO EH PRA USAR ESSA CARAIA DE CLASSE PROPRIA!!! ISSO EH SO PRA TESTE!-->
+<nav class="main-nav">
+    <ul class="pull-left first-nav">
+        <li><a href="{% url 'dashboard' %}">Digital Marketplace</a> </li>
+    </ul>
+    <ul class="pull-right">
+        <li><a href="{% url 'products:list' %}">Products</a> </li>
+        <li><a href="{% url 'tags:list' %}">Tags</a> </li>
+        <li><a href='#'>Library</a> </li>
+    </ul>
+</nav>
 <div class="main-content">
-    {%block content%}
+    {% block content %}
     <p>This is Awesome!</p>
-    {%endblock content%}
+    {% endblock content %}
 </div>
 </body>
 </html>
