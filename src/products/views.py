@@ -33,6 +33,8 @@ from tags.models import Tag
 
 from django.core.urlresolvers import reverse
 
+from analytics.models import TagView
+
 
 # ************************************* CLASS BASED VIEWS ********************************************
 
@@ -57,7 +59,6 @@ class ProductCreateView(LoginRequiredMixin, SubmitBtnMixin, CreateView):
             tag_list = tags.split(",")
             for tag in tag_list:
                 tag = ''.join(tag.split(" "))
-                print(tag)
                 if not tag == " " and not tag == "":
                     new_tag = Tag.objects.get_or_create(title=str(tag).strip())[0]
                     new_tag.products.add(form.instance)
@@ -71,6 +72,21 @@ class ProductCreateView(LoginRequiredMixin, SubmitBtnMixin, CreateView):
 
 class ProductDetailView(MultiSlugMixin, DetailView):
     model = Product
+
+    def get_context_data(self, *args,**kwargs):
+        context = super(ProductDetailView, self).get_context_data(*args, **kwargs)
+        obj = self.get_object()
+        tags = obj.tag_set.all()
+        for tag in tags:
+            new_view = TagView.objects.add_count(self.request.user, tag)
+            # new_view = TagView.objects.get_or_create(
+            #     user=self.request.user,
+            #     tag=tag
+            # )[0]
+            # new_view.count += 1
+            # new_view.save()
+
+        return context
 
 
 class ProductDownloadView(MultiSlugMixin, DetailView):

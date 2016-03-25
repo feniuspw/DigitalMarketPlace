@@ -19,8 +19,10 @@ from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 
+from dashboard.views import DashBoardView
 
 urlpatterns = [
+    url(r'^$', DashBoardView.as_view(), name="dashboard"),
     url(r'^admin/', admin.site.urls),
     url(r'^product/', include('products.urls', namespace="products")),
     url(r'^tag/', include('tags.urls', namespace="tags"))

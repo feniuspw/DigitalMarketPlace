@@ -39,7 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'analytics',
+    'tags',
     'products',
+    # just to hold basic files as header, footer and base.html
+    'base',
 ]
 
 MIDDLEWARE_CLASSES = [
