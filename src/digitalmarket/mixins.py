@@ -3,9 +3,17 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404
 
+from .decorators import ajax_required
+
+
+class AjaxRequiredMixin(object):
+    # method that is called when it's going to send data back
+    @method_decorator(ajax_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(AjaxRequiredMixin, self).dispatch(request, *args, **kwargs)
 
 class LoginRequiredMixin(object):
-    # method thar is called when it's going to send data back
+    # method that is called when it's going to send data back
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(LoginRequiredMixin, self).dispatch(request, *args, **kwargs)

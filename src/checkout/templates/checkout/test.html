@@ -1,0 +1,60 @@
+{% extends  "base.html" %}
+<!--nao precisa mais usar o csrf token nas ajax calls pq ja existe a funcao que faz isso, puxada da documentacao-->
+<!--do django
+csrfmiddlewaretoken: "{{ csrf_token }}"
+                $.ajax({
+                success: function(data, textStatus, jqXHR){
+                    if(data.works){
+                        $("#content").html("New Content " + data.time);
+                    }
+
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                    console.log(jqXHR);
+                    console.log(textStatus);
+                    console.log(errorThrown);
+                }
+                })
+
+-->
+{% block jquery %}
+
+<script>
+    $(document).ready(function(){
+        $("#test-call").click(function(event){
+            event.preventDefault();
+            //$("#content").html("hello there")
+            //first ajax call
+            //set up and run ajax call
+            var request = $.ajax({
+                method:"POST",
+                url: "{% url 'test' %}",
+                data: {
+                    testData: "Hello new data"
+                }
+            });
+            request.done(function(data){
+                if(data.works){
+                    $("#content").html(data.time);
+                }
+            });
+            request.fail(function(jqXHR, textStatus) {
+                if(jqXHR.status == 404){
+                    alert("Page not found!");
+                }else{
+                    alert("There was an error with your request. Please try again.");
+                }
+            })
+
+        })
+    })
+</script>
+{% endblock jquery %}
+
+{% block content %}
+
+<a id="test-call" href="#">Test Ajax</a>
+<div id="content"></div>
+
+{% endblock content %}
+

@@ -19,12 +19,16 @@ from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 
+from checkout.views import CheckoutAjaxView ,CheckoutTestView
 from dashboard.views import DashBoardView
 
 urlpatterns = [
     url(r'^$', DashBoardView.as_view(), name="dashboard"),
+    url(r'^checkout/$', CheckoutAjaxView.as_view(), name="checkout"),
+    url(r'^test/$', CheckoutTestView.as_view(), name="test"),
     url(r'^admin/', admin.site.urls),
     url(r'^product/', include('products.urls', namespace="products")),
+    url(r'^seller/', include('sellers.urls', namespace="sellers")),
     url(r'^tag/', include('tags.urls', namespace="tags"))
 ]
 

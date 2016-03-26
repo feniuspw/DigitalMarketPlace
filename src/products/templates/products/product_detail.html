@@ -6,6 +6,68 @@ h1{
 }
 {%endblock style%}
 
+{% block jquery %}
+<script>
+    //only runs after the document is ready
+    $(document).ready(function(){
+       //.click if the item is touched or clicked, runs the function
+       $("#purchase-btn").click(function(event){
+           var purchaseBtn = $(this)
+           // impede que o padrao do elemento aconteca.. se for um link, nao leva a lugar nenhum
+           event.preventDefault()
+           $("#dialog-confirm").fadeIn("300").dialog({
+               resizable:false,
+               height:350,
+               width:350,
+               modal:true,
+               buttons:{
+                   1: {
+                       id: "close",
+                       text: "Confirm",
+                       click: function () {
+                           console.log("confirm");
+                           var request = $.ajax({
+                                method:"POST",
+                                url: "{% url 'checkout' %}",
+                                data: {
+                                    product_id: "{{object.id}}"
+                                }
+                            });
+                            request.done(function(data){
+                                purchaseBtn.before(
+                                        "<p><a href='"+data.download+"'>Download</a></p><p><a href='"+data.preview+"'>Preview</a></p>"
+                                );
+                                purchaseBtn.fadeOut(11);
+                            });
+                            request.fail(function(jqXHR, textStatus) {
+                                if(jqXHR.status == 404){
+                                    alert("Page not found!");
+                                }else if(jqXHR.status == 401){
+                                    alert("You need to be logged in in order to purchase something.");
+                                }else{
+                                    alert("There was an error with your request. Please try again.");
+                                }
+                            });
+                           $(this).dialog("close")
+                       },
+                       class: "buy-btn"
+                   },
+                   2:{
+                       id: "close",
+                       text: "Cancel",
+                       click: function () {
+                           $(this).dialog("close")
+                       },
+                       class: "cancel-btn"
+                   }
+               }
+           })
+       })
+    })
+
+</script>
+{% endblock jquery %}
+
 
 {% block content%}
 <div class="col-primary pull-left">
@@ -22,7 +84,16 @@ h1{
     <p><a href="{{ object.get_download }}">Download</a></p>
     <p><a href="{{ object.get_download }}?preview=True">Preview</a></p>
     {% else %}
-    <p><a href="#">Purchase</a> </p>
+    <!--
+    TODO: LER ABAIXO.
+    BUG! se clicar em purchase, logo em seguida ir no preview e voltar a pagina na seta do navegador,
+    o botao purchase volta a ativa!
+    Possivel solucao. Forcar o recarregamento da pagina apos a compra
+    -->
+    <p><a id="purchase-btn" href="#">Purchase</a> </p>
+    <div id="dialog-confirm" title="Confirm Purchase" style="display:none">
+        <p>Your card on file will be charged after you agree below.</p>
+    </div>
     {% endif %}
 
 </div>
