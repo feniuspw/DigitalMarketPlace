@@ -6,7 +6,7 @@ from django.shortcuts import render
 
 # Model Imports
 from products.models import Product, MyProducts
-
+from billing.models import Transaction
 # Mixin Imports
 from digitalmarket.mixins import AjaxRequiredMixin
 # Create your views here.
@@ -29,6 +29,13 @@ class CheckoutAjaxView(AjaxRequiredMixin, View):
         product_obj = Product.objects.filter(id=product_id).first()
         if not product_obj:
             return JsonResponse({}, status=404)
+
+        # run transaction
+        # assume it's successful
+        trans_obj = Transaction.objects.create(user=request.user,
+                                               product=product_obj,
+                                               price=product_obj.get_price,
+                                               )
 
         my_products = MyProducts.objects.get_or_create(user=request.user)[0]
         my_products.products.add(product_obj)

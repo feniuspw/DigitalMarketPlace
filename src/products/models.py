@@ -53,6 +53,7 @@ class Product(models.Model):
     slug = models.SlugField(blank=True, unique=True, max_length=255)
     description = models.TextField()
     price = models.DecimalField(max_digits=100,decimal_places=2,default=9.99)
+    sale_active = models.BooleanField(default=False)
     sale_price = models.DecimalField(max_digits=100,decimal_places=2,default=6.99,null=True,blank=True)
 
     @python_2_unicode_compatible
@@ -67,6 +68,15 @@ class Product(models.Model):
         view_name = "products:download_slug"
         url = reverse(view_name, kwargs={"slug": self.slug})
         return url
+
+    # @property transforma esse metodo em uma property da classe, um atributo. ou seja, nao precisa mais
+    # chamar como product_object.get_price(). Agora pode-se chamar como product_object.get_price
+    # como se fosse um product_object.slug ou .title
+    @property
+    def get_price(self):
+        if self.sale_price and self.sale_active:
+            return self.sale_price
+        return self.price
 
     """
     get thumbnails -> instance.thumbnail_set.all() => because thumbnail has a foreign key to Product
@@ -109,18 +119,18 @@ def product_pre_save_receiver(sender, instance, *args, **kwargs):
 pre_save.connect(product_pre_save_receiver, sender=Product)
 
 
-# tentando atualizar tabela myProducts automaticamente
-def product_update_myproducts_post_save_receiver(sender, instance, *args, **kwargs):
-    # cada usuario eh unico. por isso que eu chamo o metodo abaixo com [0] no final.. ja que vai retornar
-    # uma query so.
-    # todo: verificar se nao e necessario fazer verificacao se caso a query nao retorne nada
-    # nota ao To do acima. Acho que nao e necessario. pois so cria-se um produto se ja existe um usuario.
-    # todo: talvez criar trigger no banco seja mais rapido... na verdade eh. MUDAR ISSO PRA TRIGGER NO BANCO!!!!
-    myproducts = MyProducts.objects.filter(user=instance.user)[0]
-    myproducts.products.add(instance)
-    myproducts.save()
-
-post_save.connect(product_update_myproducts_post_save_receiver, sender=Product)
+# # tentando atualizar tabela myProducts automaticamente
+# def product_update_myproducts_post_save_receiver(sender, instance, *args, **kwargs):
+#     # cada usuario eh unico. por isso que eu chamo o metodo abaixo com [0] no final.. ja que vai retornar
+#     # uma query so.
+#     # todo: verificar se nao e necessario fazer verificacao se caso a query nao retorne nada
+#     # nota ao To do acima. Acho que nao e necessario. pois so cria-se um produto se ja existe um usuario.
+#     # todo: talvez criar trigger no banco seja mais rapido... na verdade eh. MUDAR ISSO PRA TRIGGER NO BANCO!!!!
+#     myproducts = MyProducts.objects.filter(user=instance.user)[0]
+#     myproducts.products.add(instance)
+#     myproducts.save()
+#
+# post_save.connect(product_update_myproducts_post_save_receiver, sender=Product)
 
 
 def thumbnail_location(instance, filename):

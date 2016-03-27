@@ -12,6 +12,7 @@ class AjaxRequiredMixin(object):
     def dispatch(self, request, *args, **kwargs):
         return super(AjaxRequiredMixin, self).dispatch(request, *args, **kwargs)
 
+
 class LoginRequiredMixin(object):
     # method that is called when it's going to send data back
     @method_decorator(login_required)

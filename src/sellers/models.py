@@ -16,4 +16,4 @@ class SellerAccount(models.Model):
 
     @python_2_unicode_compatible
     def __str__(self):
-        return str(self.user.name)
+        return str(self.user)

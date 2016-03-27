@@ -7,5 +7,5 @@ from .views import (
 app_name = 'sellers'
 
 urlpatterns = [
-    url(r'^/$', SellerDashboard.as_view(), name='dashboard'),
+    url(r'^', SellerDashboard.as_view(), name='dashboard'),
 ]
