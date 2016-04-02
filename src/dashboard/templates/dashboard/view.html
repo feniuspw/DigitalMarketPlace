@@ -8,21 +8,29 @@
     <!--{% for product in products %}-->
 
     <!--&lt;!&ndash;{{request.build_absolute_uri}} isso aqui printa por ex o http://127.0.0.1:8000&ndash;&gt;-->
+    <!--nota: acho que bugou acima depois do 8000.. acho q acaba em 8000 o que printa-->
 
     <!--&lt;!&ndash;<a href="{% url 'products:detail_slug' slug=product.slug%}">Link</a>&ndash;&gt;-->
 
     <!--<br/>-->
     <!--{% endfor %}-->
 </div>
-
-
-
-<li>
+<div>
     <h1>Top Tags:</h1>
     {% for tag in top_tags %}
         <li><a href="{{ tag.get_absolute_url }}">{{tag}}</a></li>
 
     {% endfor %}
 </div>
+
+{% if curated.count > 0 %}
+    {% for curated_section in curated %}
+        <div>
+            <h2>{{curated_section.section_name}}</h2>
+            {% include "products/product_list_snippet.html" with product_list=curated_section.products.all %}
+        </div>
+    {% endfor %}
+{% endif %}
+
 {% endblock content %}
 

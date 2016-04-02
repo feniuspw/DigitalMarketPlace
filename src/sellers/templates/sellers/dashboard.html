@@ -18,5 +18,41 @@
 </form>
 {% endif %}
 
+{% if products %}
+<div class="pull-right col-sidebar">
+    <p>VER O PORQUE QUANDO EU EDITO UM ITEM, MANDA PRO FIM DESTA LISTA!!!!</p>
+    <h4>My Products
+        <small>
+            <br/>
+            <a href="{% url 'sellers:product_create' %}">Add</a> | <a href="{% url 'sellers:product_list' %}">View All</a>
+        </small>
+    </h4>
+{% include 'products/product_list_snippet.html' with product_list=products %}
+</div>
+{% endif %}
+
+
+{% if transactions_today %}
+<div class="pull-left col-primary">
+    <h3>Today's Sales are ${{ today_sales }}</h3>
+{% include 'sellers/transaction_list.html' with transaction_list=transactions_today %}
+</div>
+
+{% else %}
+<p>No recent transactions</p>
+{% endif %}
+
+{% if transactions %}
+<br/>
+<div class="pull-left col-primary">
+    <h3>Recent Transaction History (Total Sales: ${{ total_sales }})</h3>
+{% include 'sellers/transaction_list.html' with transaction_list=transactions %}
+</div>
+
+<p>
+    <a href="{% url 'sellers:transactions' %}">View all transactions</a>
+</p>
+
+{% endif %}
 
 {% endblock content %}

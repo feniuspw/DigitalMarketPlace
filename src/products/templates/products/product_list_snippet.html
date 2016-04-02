@@ -6,11 +6,9 @@
 <li>
     <a href="{{ instance.get_absolute_url }}">{{ instance }} </a><br/>
     {% if thumb %}
-    <a href="{{ instance.get_absolute_url }}">
-        <img src='{{ thumb }}'>
-    </a><br/>
+    <a href="{{ instance.get_absolute_url }}"><img src='{{ thumb }}'></a><br/>
     {% endif %}
-    {{ instance.price }}
+    {{ instance.get_html_price|safe }}
 </li>
 {% endwith %}
 {% empty %}

@@ -5,7 +5,7 @@ from django.conf import settings
 from mimetypes import guess_type
 
 # Q Lookups: a bit more advanced search
-from django.db.models import Q
+from django.db.models import Q, Avg, Count
 
 # file wrapper (ver se nao tem uma forma mais decente de
 # fornecer isso ( pelo que me parece foi deprecado ou mudou de pacote ) )
@@ -14,11 +14,14 @@ from wsgiref.util import FileWrapper
 from django.shortcuts import render
 # Create your views here.
 from .forms import ProductAddForm, ProductModelForm
-from .models import Product
+from .models import Product, ProductRating, MyProducts
 
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
+
+from django.http import JsonResponse
+from django.views.generic import View
 
 # ------------------------ CLASS BASED VIEWS ------------------------
 from django.views.generic.detail import DetailView
@@ -26,8 +29,11 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 # -------------------------------------------------------------------
-from digitalmarket.mixins import MultiSlugMixin, SubmitBtnMixin, LoginRequiredMixin
+from digitalmarket.mixins import MultiSlugMixin, SubmitBtnMixin, LoginRequiredMixin, AjaxRequiredMixin
 from .mixins import ProductManagerMixin
+
+from sellers.models import SellerAccount
+from sellers.mixins import SellerAccountMixin
 from tags.models import Tag
 # verificar se pode importar assim (mesmo tipo de import esta em products/templatetags/get_thumbnail.pys
 
@@ -38,19 +44,75 @@ from analytics.models import TagView
 
 # ************************************* CLASS BASED VIEWS ********************************************
 
+class ProductRatingAjaxView(AjaxRequiredMixin, View):
+    """
+    Quando printa no console do javascript erro 500 pode ser problema com o codigo
+    1: checar o spacing (as vezes o ajax acusa erro doido mas na verdade so precisa ajeitar espacamento)
+    2: checar os try-except e se as get calls dos objetos estao funcionando
 
-class ProductCreateView(LoginRequiredMixin, SubmitBtnMixin, CreateView):
+    """
+    def post(self, request, *args, **kwargs):
+
+        if not request.user.is_authenticated():
+            return JsonResponse({}, status=401)
+
+        user = request.user
+        product_id = request.POST.get("product_id")
+        rating_value = request.POST.get("rating_value")
+        product_obj = Product.objects.filter(id=product_id).first()
+        if not product_obj:
+            return JsonResponse({}, status=404)
+
+        try:
+            product_obj = Product.objects.get(id=product_id)
+        except:
+            product_obj = Product.objects.filter(id=product_id).first()
+
+        rating_obj, rating_obj_created = ProductRating.objects.get_or_create(
+            user=user,
+            products=product_obj
+        )
+
+        """MANEIRA ESTUPIDA!!!!!! MTAS CONSULTAS AO BANCO!!!"""
+        try:
+            rating_obj = ProductRating.objects.get(user=user, products=product_obj)
+        except ProductRating.MultipleObjectsReturned:
+            rating_obj = ProductRating.objects.filter(user=user, products=product_obj).first()
+        except:
+            # uma maneira de fazer
+            # rating_obj = ProductRating.objects.create(user=user, product=product_obj)
+            # outra
+            rating_obj = ProductRating()
+            rating_obj.user = user
+            rating_obj.products = product_obj
+        rating_obj.rating = int(rating_value)
+
+        # verify ownership (podia memo é nao mostrar as estrelinhas caso o cara nao seja autenticado
+        # reverse relationship
+        myproducts = user.myproducts.products.all()
+        if product_obj in myproducts:
+            rating_obj.verified = True
+        rating_obj.save()
+
+        data = {
+            "success": True
+        }
+        return JsonResponse(data)
+
+
+class ProductCreateView(SellerAccountMixin, SubmitBtnMixin, CreateView):
     model = Product
     form_class = ProductModelForm
     template_name = "products/form.html"
-    #success_url = "/product/list"
+    # success_url = "/product/list"
     submit_btn = "Add Product"
 
     def form_valid(self, form):
-        user = self.request.user
-        form.instance.user = user
+        # user = self.request.user
+        # form.instance.user = user
+        seller = self.get_account()
+        form.instance.seller = seller
         valid_data = super(ProductCreateView, self).form_valid(form)
-        form.instance.managers.add(user)
         tags = form.cleaned_data.get("tags")
         # solucao porca! apaga todas as tags relacionadas e insere de novo no banco o novo set de tags
         # mesmo se for repetido
@@ -62,7 +124,6 @@ class ProductCreateView(LoginRequiredMixin, SubmitBtnMixin, CreateView):
                 if not tag == " " and not tag == "":
                     new_tag = Tag.objects.get_or_create(title=str(tag).strip())[0]
                     new_tag.products.add(form.instance)
-        # todo: add all default users
         return valid_data
 
     # just showing that I can use reverse in this function as well
@@ -77,7 +138,22 @@ class ProductDetailView(MultiSlugMixin, DetailView):
         context = super(ProductDetailView, self).get_context_data(*args, **kwargs)
         obj = self.get_object()
         tags = obj.tag_set.all()
+        # +*+*+*+*+*+*+*+*codigo criado para determinar a hora de mostrar as votacao do produto ou nao+*+*+*+*+*+*+*
+        user = str(obj.seller)
+        logged_user = str(self.request.user)
+        context['is_owner'] = False
+        # nao vai mostrar as estrelinhas se o cara for o dono do produto ou se ele nao estiver logado
+        if user == logged_user or not self.request.user.is_authenticated():
+            context['is_owner'] = True
+
+        # ----------------------------------------------------------------------------------------------------------
+        rating_avg = obj.productrating_set.aggregate(Avg('rating'), Count('rating'))
+        context['rating_avg'] = rating_avg
         if self.request.user.is_authenticated():
+            # getting star rate
+            rating_obj = ProductRating.objects.filter(user=self.request.user, products=obj)
+            if rating_obj.exists():
+                context['my_rating'] = rating_obj.first().rating
             for tag in tags:
                 new_view = TagView.objects.add_count(self.request.user, tag)
                 # new_view = TagView.objects.get_or_create(
@@ -115,6 +191,48 @@ class ProductDownloadView(MultiSlugMixin, DetailView):
             raise Http404
 
 
+class SellerProductListView(SellerAccountMixin, ListView):
+    model = Product
+    template_name = 'sellers/product_list_view.html'
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super(SellerProductListView, self).get_queryset(*args)
+        qs = qs.filter(seller=self.get_account())
+        query = self.request.GET.get("q")
+        # gambi pra funcionar
+        if not query:
+            query = ""
+        qs = qs.filter(Q(title__icontains=query) |
+                       Q(description__icontains=query)).order_by("title")
+        return qs
+
+
+class VendorListView(ListView):
+    model = Product
+    template_name = "products/product_list.html"
+
+    def get_object(self):
+        username = self.kwargs['vendor_name']        # seller has a foreign key to user that has a field username
+        seller = get_object_or_404(SellerAccount, user__username=username)
+        return seller
+
+    def get_context_data(self, *args,**kwargs):
+        # TESTE... SE ALGO DER ERRADO COM ISSO AQUI ADICIONAR *args antes de **kwargs abaixo
+        context = super(VendorListView, self).get_context_data(**kwargs)
+        context['vendor_name'] = str(self.get_object().user.username)
+        return context
+
+    def get_queryset(self, *args, **kwargs):
+        seller = self.get_object()
+        qs = super(VendorListView, self).get_queryset(*args).filter(seller=seller)
+        query = self.request.GET.get("q")
+        if not query:
+            query = ""
+        qs = qs.filter(Q(title__icontains=query) |
+                       Q(description__icontains=query)).order_by("title")
+        return qs
+
+
 class ProductListView(ListView):
     model = Product
     # template_name = "products/list_view.html"
@@ -133,7 +251,23 @@ class ProductListView(ListView):
         if not query:
             query = ""
         qs = qs.filter(Q(title__icontains=query) |
-                       Q(description__icontains=query))
+                       Q(description__icontains=query)).order_by("title")
+        return qs
+
+
+class UserLibraryListView(LoginRequiredMixin, ListView):
+    model = Product
+    template_name = "products/library_list.html"
+
+    def get_queryset(self, *args, **kwargs):
+        obj = MyProducts.objects.get_or_create(user=self.request.user)[0]
+        qs = obj.products.all()
+        query = self.request.GET.get("q")
+        # gambi pra funcionar
+        if not query:
+            query = ""
+        qs = qs.filter(Q(title__icontains=query) |
+                       Q(description__icontains=query)).order_by("title")
         return qs
 
 
@@ -141,11 +275,11 @@ class ProductUpdateView(ProductManagerMixin, SubmitBtnMixin, MultiSlugMixin, Upd
     model = Product
     form_class = ProductModelForm
     template_name = "products/form.html"
-    success_url = "/product/list"
+    # success_url = "/seller/product/"
     submit_btn = "Update Product"
 
     def get_initial(self):
-        initial = super(ProductUpdateView,self).get_initial()
+        initial = super(ProductUpdateView, self).get_initial()
         tags = self.get_object().tag_set.all()
         initial["tags"] = ", ".join([x.title for x in tags])
         """
@@ -188,7 +322,7 @@ class ProductUpdateView(ProductManagerMixin, SubmitBtnMixin, MultiSlugMixin, Upd
 # *********************************** FUNCTION BASED VIEWS *******************************************
 def create_view(request):
     # Easy way to create forms
-    form = ProductModelForm(request.POST or None)
+    form = ProductModelForm(request.POST or None, request.FILES or None)
     if form.is_valid():
         # form.save()
         # this code below does not save the form yet, but creates an instance of the object

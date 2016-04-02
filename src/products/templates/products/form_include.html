@@ -1,4 +1,5 @@
-<form method="POST" action="">
+<form method="POST" action="" enctype="multipart/form-data">
+    <!--esse enctype acima eh muito importante quando queremos dar upload em arquivos-->
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value='{% if submit_btn %}{{ submit_btn }}{% else %}Submit{% endif %}' />

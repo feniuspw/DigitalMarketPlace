@@ -57,6 +57,7 @@ class ProductModelForm(forms.ModelForm):
             "title",
             "description",
             "price",
+            "media",
         ]
         widgets = {
             "title": forms.TextInput(attrs={
@@ -80,10 +81,8 @@ class ProductModelForm(forms.ModelForm):
 
     def clean_price(self):
         price = self.cleaned_data.get("price")
-        if price <= 1.00:
-            raise forms.ValidationError("Price must be greater than $1")
-        elif price >= 100.00:
-            raise forms.ValidationError("Price must be less than $100")
+        if price <= 0:
+            raise forms.ValidationError("Price must be greater than $0")
         return price
 
     def clean_title(self):

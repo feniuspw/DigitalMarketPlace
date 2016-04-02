@@ -33,17 +33,36 @@ from PIL import Image
 
 from django.core.files import File
 # ----------------------------------------------------------------------
+# Models
+from sellers.models import SellerAccount
 
 
 # handles the upload process
 def download_media_location(instance, filename):
     return "%s/%s" % (instance.slug, filename)
 
+"""
+How to dump your data.
+-> to have a clean migration
+-> do not lose data if you have to destroy your database.
+Syntax:
+python manage.py dumpdata APP --format json --indent 4 > filename.json
+Ex:
+python manage.py dumpdata products --format json --indent 4 > products_backup.json
+
+Return the dumped data.
+Syntax:
+python manage.py loaddata filename.json
+Ex:
+python manage.py loaddata products_backup.json
+"""
+
 
 class Product(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    seller = models.ForeignKey(SellerAccount)
+    # user = models.ForeignKey(settings.AUTH_USER_MODEL)
     # n to n database relationship
-    managers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="managers_products", blank=True)
+    # managers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="managers_products", blank=True)
     media = models.ImageField(blank=True,
                              null=True,
                              upload_to=download_media_location,
@@ -64,6 +83,10 @@ class Product(models.Model):
         view_name = "products:detail_slug"
         return reverse(view_name, kwargs={"slug": self.slug})
 
+    def get_edit_url(self):
+        view_name = "sellers:product_edit"
+        return reverse(view_name, kwargs={"pk": self.id})
+
     def get_download(self):
         view_name = "products:download_slug"
         url = reverse(view_name, kwargs={"slug": self.slug})
@@ -77,6 +100,14 @@ class Product(models.Model):
         if self.sale_price and self.sale_active:
             return self.sale_price
         return self.price
+
+    def get_html_price(self):
+        price = self.get_price
+        if price == self.sale_price:
+            # podia trocar sale_price mt bem por price...
+            return "<p><span>%s</span>  <span style='color:red; text-decoration:line-through'>%s</span></p>" %(self.sale_price, self.price)
+        else:
+            return "<p>%s</p>" % self.price
 
     """
     get thumbnails -> instance.thumbnail_set.all() => because thumbnail has a foreign key to Product
@@ -119,18 +150,18 @@ def product_pre_save_receiver(sender, instance, *args, **kwargs):
 pre_save.connect(product_pre_save_receiver, sender=Product)
 
 
-# # tentando atualizar tabela myProducts automaticamente
-# def product_update_myproducts_post_save_receiver(sender, instance, *args, **kwargs):
-#     # cada usuario eh unico. por isso que eu chamo o metodo abaixo com [0] no final.. ja que vai retornar
-#     # uma query so.
-#     # todo: verificar se nao e necessario fazer verificacao se caso a query nao retorne nada
-#     # nota ao To do acima. Acho que nao e necessario. pois so cria-se um produto se ja existe um usuario.
-#     # todo: talvez criar trigger no banco seja mais rapido... na verdade eh. MUDAR ISSO PRA TRIGGER NO BANCO!!!!
-#     myproducts = MyProducts.objects.filter(user=instance.user)[0]
-#     myproducts.products.add(instance)
-#     myproducts.save()
-#
-# post_save.connect(product_update_myproducts_post_save_receiver, sender=Product)
+# tentando atualizar tabela myProducts automaticamente
+def product_update_myproducts_post_save_receiver(sender, instance, *args, **kwargs):
+    # cada usuario eh unico. por isso que eu chamo o metodo abaixo com [0] no final.. ja que vai retornar
+    # uma query so.
+    # todo: verificar se nao e necessario fazer verificacao se caso a query nao retorne nada
+    # nota ao To do acima. Acho que nao e necessario. pois so cria-se um produto se ja existe um usuario.
+    # todo: talvez criar trigger no banco seja mais rapido... na verdade eh. MUDAR ISSO PRA TRIGGER NO BANCO!!!!
+    myproducts = MyProducts.objects.get_or_create(user=instance.seller.user)[0]
+    myproducts.products.add(instance)
+    myproducts.save()
+
+post_save.connect(product_update_myproducts_post_save_receiver, sender=Product)
 
 
 def thumbnail_location(instance, filename):
@@ -213,6 +244,8 @@ post_save.connect(product_post_save_receiver, sender=Product)
 
 
 class MyProducts(models.Model):
+    # user tem relacao OneToOne. pode usar entao dot notation pra acessar elementos
+    #
     user = models.OneToOneField(settings.AUTH_USER_MODEL)
     products = models.ManyToManyField(Product, blank=True)
 
@@ -223,3 +256,24 @@ class MyProducts(models.Model):
     class Meta:
         verbose_name = "My Products"
 
+
+class ProductRating(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    products = models.ForeignKey(Product, blank=True)
+    rating = models.IntegerField(null=True, blank=True)
+    verified = models.BooleanField(default=False)
+
+    @python_2_unicode_compatible
+    def __str__(self):
+        return "%s" % self.rating
+
+
+class CuratedProducts(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    section_name = models.CharField(max_length=120)
+    products = models.ManyToManyField(Product, blank=True)
+    active = models.BooleanField(default=True)
+
+    @python_2_unicode_compatible
+    def __str__(self):
+        return self.section_name

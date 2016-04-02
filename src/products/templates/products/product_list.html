@@ -12,7 +12,7 @@
 
 {% block content %}
 
-<h1>Product</h1>
+<h1>{% if vendor_name %}{{vendor_name}}{% endif %} Products</h1>
 <p>
 <form>
     <input type="text" name="q" placeholder="Search" value="{{ request.GET.q }}"/>

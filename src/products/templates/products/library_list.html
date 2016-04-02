@@ -1,0 +1,58 @@
+{% extends "base.html"%}
+{% load get_thumbnail %}
+{% block style%}
+.row1{
+    background-color:#EEEEEE;
+}
+.row2{
+    background-color:#DDDDDD;
+}
+
+{% endblock style%}
+
+{% block content %}
+
+<h1>My Library</h1>
+<p>
+<form>
+    <input type="text" name="q" placeholder="Search" value="{{ request.GET.q }}"/>
+    <input type="submit" value="Search"/>
+</form>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+        <th>Product</th>
+        <th>Image</th>
+        <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    <!--TODO: IF YOU TRY TO RATE WITHOUT BEING LOGGED IN, GO TO THE LOGIN PAGE-->
+    {% for instance in product_list %}
+    {% with instance|get_thumbnail:"micro" as thumb %}
+    <tr>
+    <td><a href="{{ instance.get_absolute_url }}">{{ instance }} </a></td>
+    <td>
+        {% if thumb %}
+        <a href="{{ instance.get_absolute_url }}"><img src='{{ thumb }}'></a><br/>
+        {% endif %}
+    </td>
+    <td>
+        <!-- TODO: Mesmo que nao tenha media, ainda retorna o download link e da pau-->
+        {% if instance.get_download %}
+        <a href="{{ instance.get_download }}">Download</a>
+        {% else %}
+        <span>Comming Soon.</span>
+        {% endif %}
+    </td>
+    </tr>
+    {% endwith %}
+    {% empty %}
+    <li> No products in library yet. Please, shop now.</li>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock content %}

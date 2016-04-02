@@ -1,0 +1,23 @@
+{% extends "base.html"%}
+
+{% block style%}
+.row1{
+    background-color:#EEEEEE;
+}
+.row2{
+    background-color:#DDDDDD;
+}
+
+{% endblock style%}
+
+{% block content %}
+
+<h1>Transactions</h1>
+
+<ul>
+    {% include 'sellers/transaction_list.html' with transaction_list=object_list %}
+
+</ul>
+
+
+{% endblock content %}

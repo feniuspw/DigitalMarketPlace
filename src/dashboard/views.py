@@ -1,7 +1,7 @@
 import random
 from django.views.generic import View
 from django.shortcuts import render
-from products.models import Product
+from products.models import Product, CuratedProducts
 # Create your views here.
 
 
@@ -14,6 +14,7 @@ class DashBoardView(View):
         top_tags = None
         products = None
         owned = None
+        curated = CuratedProducts.objects.filter(active=True).order_by("?")
         try:
             # tagview_set -> tem que usar _set  pq eh foreign key
             tag_views = request.user.tagview_set.all().order_by("-count")[:5]
@@ -46,6 +47,7 @@ class DashBoardView(View):
         context = {
             "products": products,
             "top_tags": top_tags,
+            "curated": curated,
         }
 
         return render(request, "dashboard/view.html", context)

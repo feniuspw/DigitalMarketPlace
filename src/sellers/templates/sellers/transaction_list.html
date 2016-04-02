@@ -1,0 +1,19 @@
+<table>
+    <thead>
+        <th>Product</th>
+        <th>User</th>
+        <th>Price</th>
+        <th>Time</th>
+    </thead>
+    <tbody>
+        {% for trans in transaction_list %}
+        <tr>
+            <td>{{trans.product}}</td>
+            <td>{{trans.user}}</td>
+            <td>{{trans.price}}</td>
+            <!--Using template filter timesince-->
+            <td>{{trans.timestamp | timesince}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
